@@ -11,7 +11,7 @@ autoinstall:
     layout:
       name: lvm
     swap:
-      size: 1024
+      size: 8192  # 8 GB swap
     config:
       - type: disk
         id: disk0
