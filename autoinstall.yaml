@@ -1,0 +1,76 @@
+#cloud-config
+autoinstall:
+  version: 1
+  interactive-sections:
+    - identity
+    - storage
+  locale: en_US
+  keyboard:
+    layout: us
+  storage:
+    layout:
+      name: lvm
+    swap:
+      size: 1024
+    config:
+      - type: disk
+        id: disk0
+        match:
+          size: largest
+        wipe: superblock-recursive
+        ptable: gpt
+        preserve: false
+      - type: partition
+        id: partition0
+        device: disk0
+        size: 512M
+        flag: boot
+      - type: partition
+        id: partition1
+        device: disk0
+        size: -1
+      - type: luks
+        id: luks0
+        device: partition1
+        preserve: false
+        passphrase: ""
+        prompt: true
+      - type: lvm_volgroup
+        id: vg0
+        devices: [luks0]
+      - type: lvm_logical_volume
+        id: lv_root
+        name: root
+        volgroup: vg0
+        size: 100%
+      - type: format
+        id: format0
+        volume: lv_root
+        fstype: ext4
+      - type: mount
+        id: mount0
+        path: /
+        device: format0
+  identity:
+    hostname: ubuntu-desktop
+    username: ""
+    password: ""
+  apt:
+    primary:
+      - arches: [amd64]
+        uri: http://archive.ubuntu.com/ubuntu
+  packages:
+    - ubuntu-desktop-minimal
+  late-commands:
+    - curtin in-target --target=/target -- apt update
+    - curtin in-target --target=/target -- apt install -y wget gpg
+    - curtin in-target --target=/target -- bash -c "wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google-linux.gpg"
+    - curtin in-target --target=/target -- bash -c "echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list"
+    - curtin in-target --target=/target -- apt update
+    - curtin in-target --target=/target -- apt install -y google-chrome-stable
+    - curtin in-target --target=/target -- wget -O /tmp/slack.deb https://downloads.slack-edge.com/linux_releases/slack-desktop-4.35.126-amd64.deb
+    - curtin in-target --target=/target -- apt install -y /tmp/slack.deb
+    - curtin in-target --target=/target -- curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | gpg --dearmor -o /usr/share/keyrings/tailscale-archive-keyring.gpg
+    - curtin in-target --target=/target -- bash -c "echo 'deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu focal main' > /etc/apt/sources.list.d/tailscale.list"
+    - curtin in-target --target=/target -- apt update
+    - curtin in-target --target=/target -- apt install -y tailscale
