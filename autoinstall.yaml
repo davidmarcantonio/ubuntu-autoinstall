@@ -10,8 +10,6 @@ autoinstall:
   storage:
     layout:
       name: lvm
-    swap:
-      size: 8192  # 8 GB swap
     config:
       - type: disk
         id: disk0
@@ -62,14 +60,28 @@ autoinstall:
   packages:
     - ubuntu-desktop-minimal
   late-commands:
+    # Update package list and basic tools
     - curtin in-target --target=/target -- apt update
-    - curtin in-target --target=/target -- apt install -y wget gpg
+    - curtin in-target --target=/target -- apt install -y wget curl gpg
+
+    # Create 8 GB swap file
+    - curtin in-target --target=/target -- fallocate -l 8G /swapfile
+    - curtin in-target --target=/target -- chmod 600 /swapfile
+    - curtin in-target --target=/target -- mkswap /swapfile
+    - curtin in-target --target=/target -- swapon /swapfile
+    - curtin in-target --target=/target -- bash -c "echo '/swapfile none swap sw 0 0' >> /etc/fstab"
+
+    # Install Google Chrome
     - curtin in-target --target=/target -- bash -c "wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /usr/share/keyrings/google-linux.gpg"
     - curtin in-target --target=/target -- bash -c "echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list"
     - curtin in-target --target=/target -- apt update
     - curtin in-target --target=/target -- apt install -y google-chrome-stable
+
+    # Install Slack
     - curtin in-target --target=/target -- wget -O /tmp/slack.deb https://downloads.slack-edge.com/linux_releases/slack-desktop-4.35.126-amd64.deb
     - curtin in-target --target=/target -- apt install -y /tmp/slack.deb
+
+    # Install Tailscale
     - curtin in-target --target=/target -- curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | gpg --dearmor -o /usr/share/keyrings/tailscale-archive-keyring.gpg
     - curtin in-target --target=/target -- bash -c "echo 'deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu focal main' > /etc/apt/sources.list.d/tailscale.list"
     - curtin in-target --target=/target -- apt update
