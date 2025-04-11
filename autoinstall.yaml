@@ -3,7 +3,6 @@ autoinstall:
   version: 1
   interactive-sections:
     - identity
-    - storage
   locale: en_US
   keyboard:
     layout: us
@@ -60,11 +59,11 @@ autoinstall:
   packages:
     - ubuntu-desktop-minimal
   late-commands:
-    # Update package list and basic tools
+    # Update package list and install tools
     - curtin in-target --target=/target -- apt update
     - curtin in-target --target=/target -- apt install -y wget curl gpg
 
-    # Create 8 GB swap file
+    # Create swap file
     - curtin in-target --target=/target -- fallocate -l 8G /swapfile
     - curtin in-target --target=/target -- chmod 600 /swapfile
     - curtin in-target --target=/target -- mkswap /swapfile
