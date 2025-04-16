@@ -59,11 +59,11 @@ autoinstall:
   packages:
     - ubuntu-desktop-minimal
   late-commands:
-    # Update package list and install tools
+    # Update package list and install essential tools
     - curtin in-target --target=/target -- apt update
-    - curtin in-target --target=/target -- apt install -y wget curl gpg
+    - curtin in-target --target=/target -- apt install -y wget curl gpg snapd
 
-    # Create swap file
+    # Create 8 GB swap file
     - curtin in-target --target=/target -- fallocate -l 8G /swapfile
     - curtin in-target --target=/target -- chmod 600 /swapfile
     - curtin in-target --target=/target -- mkswap /swapfile
@@ -76,12 +76,5 @@ autoinstall:
     - curtin in-target --target=/target -- apt update
     - curtin in-target --target=/target -- apt install -y google-chrome-stable
 
-    # Install Slack
-    - curtin in-target --target=/target -- wget -O /tmp/slack.deb https://downloads.slack-edge.com/linux_releases/slack-desktop-4.35.126-amd64.deb
-    - curtin in-target --target=/target -- apt install -y /tmp/slack.deb
-
-    # Install Tailscale
-    - curtin in-target --target=/target -- curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.gpg | gpg --dearmor -o /usr/share/keyrings/tailscale-archive-keyring.gpg
-    - curtin in-target --target=/target -- bash -c "echo 'deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu focal main' > /etc/apt/sources.list.d/tailscale.list"
-    - curtin in-target --target=/target -- apt update
-    - curtin in-target --target=/target -- apt install -y tailscale
+    # Install Slack via Snap
+    - curtin in-target --target=/target -- snap install slack
